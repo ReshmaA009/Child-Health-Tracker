@@ -31,6 +31,12 @@ st.markdown("""
         font-weight: bold;
     }
 
+    /* Vaccination checkboxes labels */
+    .stCheckbox > div > label {
+        color: #8B0000 !important;
+        font-weight: bold;
+    }
+
     /* Tables */
     table {
         background-color: #ffe6f0 !important;
@@ -361,5 +367,6 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
 
