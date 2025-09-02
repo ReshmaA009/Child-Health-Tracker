@@ -316,10 +316,13 @@ else:
             for year, vaccines in vaccines_by_year.items():
                 st.subheader(year)
                 for v in vaccines:
-                    c.execute("SELECT id FROM vaccinations WHERE app_number=? AND vaccine_name=?",
+                    c.execute("SELECT id FROM vaccinations WHERE app_number=? AND vaccine_name=?", 
                               (st.session_state.app_number, v))
                     completed = c.fetchone() is not None
-                    done = st.checkbox(f"{v}", value=completed, key=f"{v}_done")
+
+                    # Wrap label in HTML to make it dark blue
+                    checkbox_label = f"<span style='color: darkblue; font-weight: bold;'>{v}</span>"
+                    done = st.checkbox(checkbox_label, value=completed, key=f"{v}_done", unsafe_allow_html=True)
 
                     if done and not completed:
                         barcode = str(uuid.uuid4())[:8]
@@ -330,6 +333,7 @@ else:
                         c.execute("DELETE FROM vaccinations WHERE app_number=? AND vaccine_name=?",
                                   (st.session_state.app_number, v))
                         conn.commit()
+
 
             # Display completed vaccines
             c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?",
@@ -381,5 +385,6 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
 
