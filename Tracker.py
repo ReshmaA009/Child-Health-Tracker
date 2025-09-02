@@ -301,39 +301,49 @@ else:
                 st.subheader("Medical History Records")
                 st.table(history_rows)
 
-            # ------------------ Vaccinations ------------------
-            st.subheader("Vaccination Schedule")
-            vaccines_by_age = {
-                0: ["BCG", "Hepatitis B"],
-                1.5: ["Polio 1", "DPT 1", "Hepatitis B 2"],
-                2.5: ["Polio 2", "DPT 2", "Hepatitis B 3"],
-                3.5: ["Polio 3", "DPT 3"],
-                9: ["Measles 1"],
-                15: ["MMR 1", "Varicella 1"],
-                18: ["DPT Booster", "Polio Booster"],
-                48: ["MMR 2", "Varicella 2"]
-            }
+            # --- TAB 3: Vaccinations ---
+            with tab3:
+                st.header("Vaccination Schedule (0-5 Years)")
+                vaccines_by_year = {
+                    "At Birth": ["BCG", "Hepatitis B"],
+                    "6 Weeks": ["Polio 1", "DPT 1", "Hepatitis B 2"],
+                    "10 Weeks": ["Polio 2", "DPT 2", "Hepatitis B 3"],
+                    "14 Weeks": ["Polio 3", "DPT 3"],
+                    "9 Months": ["Measles 1"],
+                    "15 Months": ["MMR 1", "Varicella 1"],
+                    "18 Months": ["DPT Booster", "Polio Booster"],
+                    "4-5 Years": ["MMR 2", "Varicella 2"]
+                }
 
-            for month, vac_list in vaccines_by_age.items():
-                st.markdown(f"**Due at ~{month} months**")
-                for vac in vac_list:
-                    c.execute("SELECT id FROM vaccinations WHERE app_number=? AND vaccine_name=?", (app_number_input, vac))
-                    completed = c.fetchone() is not None
-                    done = st.checkbox(f"{vac}", value=completed, key=f"{vac}_{app_number_input}")
-                    if done and not completed:
-                        barcode = str(uuid.uuid4())[:8]
-                        c.execute("""
-                            INSERT INTO vaccinations (app_number, vaccine_name, date, barcode)
-                            VALUES (?,?,?,?)
-                        """, (app_number_input, vac, str(date.today()), barcode))
-                        conn.commit()
+                for year, vaccines in vaccines_by_year.items():
+                    st.subheader(year)
+                    for v in vaccines:
+                        # Check DB if vaccine completed
+                        c.execute("SELECT id FROM vaccinations WHERE app_number=? AND vaccine_name=?", (st.session_state.app_number, v))
+                        completed = c.fetchone() is not None
 
-            # Display completed vaccinations
-            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (app_number_input,))
-            vac_rows = c.fetchall()
-            if vac_rows:
-                st.subheader("Completed Vaccinations")
-                st.table(vac_rows)
+                        done = st.checkbox(f"{v}", value=completed, key=f"{v}_done")
+
+                        if done and not completed:
+                            # Add to DB with barcode
+                            barcode = str(uuid.uuid4())[:8]
+                            c.execute("""
+                                INSERT INTO vaccinations (app_number, vaccine_name, date, barcode)
+                                VALUES (?,?,?,?)
+                            """, (st.session_state.app_number, v, str(date.today()), barcode))
+                            conn.commit()
+
+                        elif not done and completed:
+                            # Remove from DB if unchecked
+                            c.execute("DELETE FROM vaccinations WHERE app_number=? AND vaccine_name=?", (st.session_state.app_number, v))
+                            conn.commit()
+
+                # Display completed vaccines
+                c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (st.session_state.app_number,))
+                vac_rows = c.fetchall()
+                if vac_rows:
+                    st.subheader("Completed Vaccinations")
+                    st.table(vac_rows)
 
     # ---------------------- Patient Panel ----------------------
     elif st.session_state.role == "Patient":
@@ -368,6 +378,7 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
 
 
