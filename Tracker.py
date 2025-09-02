@@ -4,7 +4,6 @@ import uuid
 import sqlite3
 import hashlib
 
-# ---------------------- Background & Panel Styling ----------------------
 st.markdown("""
     <style>
     /* Page background gradient (rainbow) */
@@ -13,36 +12,38 @@ st.markdown("""
     }
 
     /* Panels / boxes */
-    .css-1d391kg, .css-1v3fvcr, .stFrame {
+    .stContainer, .css-1d391kg, .css-1v3fvcr, .stFrame {
         background-color: #ffe6f0 !important;  /* Soft pink */
         padding: 1rem;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        color: red;  /* Text inside panels */
-    }
-
-    /* Tables inside panels */
-    table {
-        background-color: #ffe6f0 !important;
-        color: red;
-        border-radius: 10px;
-    }
-
-    /* Labels and inputs */
-    label, .stTextInput > div > input {
-        color: red;
     }
 
     /* Headings */
     h1, h2, h3, h4, h5, h6 {
-        color: red;
+        color: #8B0000 !important;  /* Dark red / brown */
+    }
+
+    /* Labels, text inside inputs, text areas, and tables */
+    label, .stTextInput > div > input, .stTextArea > div > textarea, .stSelectbox > div, 
+    .stNumberInput > div > input, td, th {
+        color: #8B0000 !important;
+        font-weight: bold;
+    }
+
+    /* Tables */
+    table {
+        background-color: #ffe6f0 !important;
+        color: #8B0000 !important;
+        border-radius: 10px;
     }
 
     /* Buttons text */
-    button {
-        color: red;
+    button, .stButton > button {
+        color: #8B0000 !important;
+        font-weight: bold;
     }
-    </style>
+</style>
 """, unsafe_allow_html=True)
 
 # ---------------------- Database Setup ----------------------
@@ -360,4 +361,5 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
