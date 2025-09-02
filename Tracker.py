@@ -336,7 +336,15 @@ else:
                         c.execute("DELETE FROM vaccinations WHERE app_number=? AND vaccine_name=?",
                                   (st.session_state.app_number, v))
                         conn.commit()
-
+             # Display completed vaccines with barcode
+            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", 
+                      (st.session_state.app_number,))
+            vac_rows = c.fetchall()
+            if vac_rows:
+                st.subheader("Completed Vaccinations")
+                st.table(vac_rows)
+            else:
+                st.info("No vaccinations recorded yet.")
 
     # ---------------------- Patient Panel ----------------------
     elif st.session_state.role == "Patient":
@@ -380,6 +388,7 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
 
 
