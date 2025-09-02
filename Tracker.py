@@ -252,4 +252,6 @@ if st.session_state.doctor_logged_in:
                     new_hospital = st.text_input("Hospital Name", value=h[2], key=f"hospital_{h[0]}")
                     new_specialization = st.text_input("Doctor Specialization", value=h[4], key=f"spec_{h[0]}")
                     new_reason = st.text_area("Reason for Visit", value=h[5], key=f"reason_{h[0]}")
-                    new_meds = st.text_area("Medications Prescribed", value=h[6], key=f"meds
+                    new_meds = st.text_area("Medications Prescribed", value=h[6], key=f"meds_{h[0]}")
+
+
