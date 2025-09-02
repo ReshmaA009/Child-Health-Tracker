@@ -63,6 +63,19 @@ def create_tables():
 
 create_tables()
 
+# ---------------------- Add missing columns for older DB ----------------------
+conn = get_connection()
+c = conn.cursor()
+try:
+    c.execute("ALTER TABLE medical_history ADD COLUMN diagnosis TEXT")
+except sqlite3.OperationalError:
+    pass
+try:
+    c.execute("ALTER TABLE medical_history ADD COLUMN allergic TEXT")
+except sqlite3.OperationalError:
+    pass
+conn.commit()
+
 # ---------------------- Session State ----------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -248,7 +261,6 @@ else:
             }
 
             birth_date_dt = date.fromisoformat(child[3]) if child else birth_date
-            age_months = (date.today().year - birth_date_dt.year) * 12 + (date.today().month - birth_date_dt.month)
 
             for month, vac_list in vaccines_by_age.items():
                 st.markdown(f"**Due at ~{month} months**")
