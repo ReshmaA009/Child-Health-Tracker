@@ -41,8 +41,10 @@ def create_tables():
             hospital TEXT,
             doctor TEXT,
             specialization TEXT,
+            diagnosis TEXT,
             reason TEXT,
             medications TEXT,
+            allergic TEXT,
             FOREIGN KEY(app_number) REFERENCES child_details(app_number)
         )
     """)
@@ -155,13 +157,13 @@ else:
 
         if app_number_input:
             st.session_state.app_number = app_number_input
-
             # Fetch child details
             c.execute("SELECT * FROM child_details WHERE app_number=?", (app_number_input,))
             child = c.fetchone()
 
+            # ------------------ Child Details ------------------
+            st.subheader("Child Details")
             if child:
-                st.subheader("Child Details (Editable)")
                 col1, col2 = st.columns(2)
                 with col1:
                     child_name = st.text_input("Child Name", value=child[1])
@@ -175,28 +177,7 @@ else:
                 with col4:
                     height = st.number_input("Height (cm)", value=child[5])
                     pulse = st.number_input("Pulse", value=child[6])
-
-                if st.button("Save Child Details"):
-                    c.execute("""
-                        INSERT OR REPLACE INTO child_details (app_number, name, birth_place, birth_date, weight, height, pulse, last_tracked)
-                        VALUES (?,?,?,?,?,?,?,?)
-                    """, (app_number_input, child_name, birth_place, str(birth_date), weight, height, pulse, str(last_tracked)))
-                    conn.commit()
-                    st.success("Child details updated successfully!")
-
-                if st.button("Delete Patient Record"):
-                    confirm = st.checkbox("Confirm deletion? This will remove ALL data.", key="confirm_delete")
-                    if confirm:
-                        c.execute("DELETE FROM medical_history WHERE app_number=?", (app_number_input,))
-                        c.execute("DELETE FROM vaccinations WHERE app_number=?", (app_number_input,))
-                        c.execute("DELETE FROM child_details WHERE app_number=?", (app_number_input,))
-                        conn.commit()
-                        st.success(f"Patient {app_number_input} deleted!")
-                        st.session_state.app_number = str(uuid.uuid4())[:8]
-                        st.rerun()
-
             else:
-                st.info("No record found. Enter new child details below.")
                 col1, col2 = st.columns(2)
                 with col1:
                     child_name = st.text_input("Child Name", key="new_child_name")
@@ -211,18 +192,88 @@ else:
                     height = st.number_input("Height (cm)", min_value=30, max_value=150, step=1, key="new_height")
                     pulse = st.number_input("Pulse", min_value=50, max_value=200, step=1, key="new_pulse")
 
-                if st.button("Save New Child"):
-                    c.execute("""
-                        INSERT INTO child_details (app_number, name, birth_place, birth_date, weight, height, pulse, last_tracked)
-                        VALUES (?,?,?,?,?,?,?,?)
-                    """, (app_number_input, child_name, birth_place, str(birth_date), weight, height, pulse, str(last_tracked)))
-                    conn.commit()
-                    st.success("New child record created successfully!")
+            if st.button("Save Child Details"):
+                c.execute("""
+                    INSERT OR REPLACE INTO child_details 
+                    (app_number, name, birth_place, birth_date, weight, height, pulse, last_tracked)
+                    VALUES (?,?,?,?,?,?,?,?)
+                """, (app_number_input, child_name, birth_place, str(birth_date), weight, height, pulse, str(last_tracked)))
+                conn.commit()
+                st.success("Child details saved successfully!")
+
+            # ------------------ Medical History ------------------
+            st.subheader("Medical History / Prescription")
+            with st.form(key=f"history_form_{app_number_input}"):
+                visit_date = st.date_input("Visit Date", value=date.today())
+                hospital = st.text_input("Hospital Name")
+                specialization = st.text_input("Doctor Specialization")
+                diagnosis = st.text_area("Diagnosis")
+                reason = st.text_area("Reason for Visit")
+                meds = st.text_area("Medications Prescribed")
+                allergic = st.text_area("Allergic to Medicine")
+                submitted = st.form_submit_button("Add Medical History")
+
+                if submitted:
+                    if visit_date and hospital and specialization and reason:
+                        c.execute("""
+                            INSERT INTO medical_history 
+                            (app_number, visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic)
+                            VALUES (?,?,?,?,?,?,?,?,?)
+                        """, (app_number_input, str(visit_date), hospital, st.session_state.username,
+                              specialization, diagnosis, reason, meds, allergic))
+                        conn.commit()
+                        st.success("Medical history added!")
+
+            # Display Medical History
+            c.execute("""
+                SELECT visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic 
+                FROM medical_history WHERE app_number=?
+            """, (app_number_input,))
+            history_rows = c.fetchall()
+            if history_rows:
+                st.subheader("Medical History Records")
+                st.table(history_rows)
+
+            # ------------------ Vaccinations ------------------
+            st.subheader("Vaccination Schedule")
+            vaccines_by_age = {
+                0: ["BCG", "Hepatitis B"],
+                1.5: ["Polio 1", "DPT 1", "Hepatitis B 2"],
+                2.5: ["Polio 2", "DPT 2", "Hepatitis B 3"],
+                3.5: ["Polio 3", "DPT 3"],
+                9: ["Measles 1"],
+                15: ["MMR 1", "Varicella 1"],
+                18: ["DPT Booster", "Polio Booster"],
+                48: ["MMR 2", "Varicella 2"]
+            }
+
+            birth_date_dt = date.fromisoformat(child[3]) if child else birth_date
+            age_months = (date.today().year - birth_date_dt.year) * 12 + (date.today().month - birth_date_dt.month)
+
+            for month, vac_list in vaccines_by_age.items():
+                st.markdown(f"**Due at ~{month} months**")
+                for vac in vac_list:
+                    c.execute("SELECT id FROM vaccinations WHERE app_number=? AND vaccine_name=?", (app_number_input, vac))
+                    completed = c.fetchone() is not None
+                    done = st.checkbox(f"{vac}", value=completed, key=f"{vac}_{app_number_input}")
+                    if done and not completed:
+                        barcode = str(uuid.uuid4())[:8]
+                        c.execute("""
+                            INSERT INTO vaccinations (app_number, vaccine_name, date, barcode)
+                            VALUES (?,?,?,?)
+                        """, (app_number_input, vac, str(date.today()), barcode))
+                        conn.commit()
+
+            # Display completed vaccinations
+            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (app_number_input,))
+            vac_rows = c.fetchall()
+            if vac_rows:
+                st.subheader("Completed Vaccinations")
+                st.table(vac_rows)
 
     # ---------------------- Patient Panel ----------------------
     elif st.session_state.role == "Patient":
-        st.subheader("Patient Panel")
-        st.write("You can view your child details here (Read-only).")
+        st.subheader("Patient Panel (Read-only)")
         c.execute("SELECT * FROM child_details")
         children = c.fetchall()
         for child in children:
@@ -232,3 +283,19 @@ else:
             st.write(f"DOB: {child[3]}")
             st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
 
+            # Medical History
+            c.execute("""
+                SELECT visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic
+                FROM medical_history WHERE app_number=?
+            """, (child[0],))
+            history_rows = c.fetchall()
+            if history_rows:
+                st.subheader("Medical History / Prescription")
+                st.table(history_rows)
+
+            # Vaccinations
+            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (child[0],))
+            vac_rows = c.fetchall()
+            if vac_rows:
+                st.subheader("Vaccinations")
+                st.table(vac_rows)
