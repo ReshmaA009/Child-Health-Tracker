@@ -103,7 +103,7 @@ with tab1:
             st.session_state.username = username
             st.session_state.role = role
             st.success(f"Logged in as {role}: {username}")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid credentials or role mismatch")
 
@@ -153,4 +153,5 @@ if st.session_state.logged_in:
                 else:
                     st.info("No record found. Enter new details below.")
                     # Here you can add new child details input forms for Doctor
+
 
