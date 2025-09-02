@@ -88,7 +88,7 @@ def logout():
     st.session_state.username = ""
     st.session_state.role = ""
     st.session_state.app_number = ""
-    st.rerun()
+    st.experimental_rerun()
 
 # ---------------------- App ----------------------
 st.title("Child Health Tracker")
@@ -102,14 +102,36 @@ if not st.session_state.logged_in:
         username = st.text_input("Username", key="login_user")
         password = st.text_input("Password", type="password", key="login_pass")
         role = st.selectbox("Role", ["Doctor", "Patient"])
+
+        app_number_input = ""
+        if role == "Patient":
+            app_number_input = st.text_input("Application Number", key="login_app_number")
+
         if st.button("Login"):
             success, db_role = verify_login(username, password)
             if success and db_role == role:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.role = db_role
-                st.success(f"Logged in as {db_role}: {username}")
-                st.rerun()
+                if role == "Patient":
+                    # Check if this app_number belongs to this patient (username matches child name)
+                    conn = get_connection()
+                    c = conn.cursor()
+                    c.execute("SELECT * FROM child_details WHERE app_number=? AND name=?", 
+                              (app_number_input, username))
+                    child = c.fetchone()
+                    if child:
+                        st.session_state.logged_in = True
+                        st.session_state.username = username
+                        st.session_state.role = "Patient"
+                        st.session_state.app_number = app_number_input
+                        st.success(f"Logged in as Patient: {username}")
+                        st.experimental_rerun()
+                    else:
+                        st.error("Invalid Application Number for this patient.")
+                else:
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.session_state.role = "Doctor"
+                    st.success(f"Logged in as Doctor: {username}")
+                    st.experimental_rerun()
             else:
                 st.error("Invalid credentials or role mismatch")
 
@@ -266,37 +288,36 @@ else:
                 st.subheader("Completed Vaccinations")
                 st.table(vac_rows)
 
-        # ---------------------- Patient Panel ----------------------
-        elif st.session_state.role == "Patient":
-            st.subheader("Patient Panel (Read-only)")
-            c.execute("SELECT * FROM child_details")
-            children = c.fetchall()
-            for child in children:
-                st.markdown(f"**Application Number:** {child[0]}")
-                st.write(f"Name: {child[1]}")
-                st.write(f"Birth Place: {child[2]}")
-                st.write(f"DOB: {child[3]}")
-                st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
+    # ---------------------- Patient Panel ----------------------
+    elif st.session_state.role == "Patient":
+        st.subheader("Patient Panel (Read-only)")
+        app_number_input = st.session_state.app_number
+        c.execute("SELECT * FROM child_details WHERE app_number=?", (app_number_input,))
+        child = c.fetchone()
+        if child:
+            st.markdown(f"**Application Number:** {child[0]}")
+            st.write(f"Name: {child[1]}")
+            st.write(f"Birth Place: {child[2]}")
+            st.write(f"DOB: {child[3]}")
+            st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
 
-                # Medical History
-                c.execute("""
-                    SELECT visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic
-                    FROM medical_history WHERE app_number=?
-                """, (child[0],))
-                history_rows = c.fetchall()
-                if history_rows:
-                    st.subheader("Medical History / Prescription / Allergic Info")
-                    st.table(history_rows)
-                else:
-                    st.info("No medical history recorded yet.")
+            # Medical History
+            c.execute("""
+                SELECT visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic
+                FROM medical_history WHERE app_number=?
+            """, (app_number_input,))
+            history_rows = c.fetchall()
+            if history_rows:
+                st.subheader("Medical History / Prescription / Allergic Info")
+                st.table(history_rows)
+            else:
+                st.info("No medical history recorded yet.")
 
-                # Vaccinations
-                c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (child[0],))
-                vac_rows = c.fetchall()
-                if vac_rows:
-                    st.subheader("Vaccinations (with Barcode)")
-                    st.table(vac_rows)
-                else:
-                    st.info("No vaccinations recorded yet.")
-
-
+            # Vaccinations
+            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (app_number_input,))
+            vac_rows = c.fetchall()
+            if vac_rows:
+                st.subheader("Vaccinations (with Barcode)")
+                st.table(vac_rows)
+            else:
+                st.info("No vaccinations recorded yet.")
