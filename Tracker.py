@@ -90,7 +90,7 @@ def logout():
     st.session_state.username = ""
     st.session_state.role = ""
     st.session_state.app_number = ""
-    st.experimental_rerun()
+    st.rerun()
 
 # ---------------------- App ----------------------
 st.title("Child Health Tracker")
@@ -111,7 +111,7 @@ if not st.session_state.logged_in:
                 st.session_state.username = username
                 st.session_state.role = db_role
                 st.success(f"Logged in as {db_role}: {username}")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Invalid credentials or role mismatch")
 
@@ -193,7 +193,7 @@ else:
                         conn.commit()
                         st.success(f"Patient {app_number_input} deleted!")
                         st.session_state.app_number = str(uuid.uuid4())[:8]
-                        st.experimental_rerun()
+                        st.rerun()
 
             else:
                 st.info("No record found. Enter new child details below.")
@@ -231,3 +231,4 @@ else:
             st.write(f"Birth Place: {child[2]}")
             st.write(f"DOB: {child[3]}")
             st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
+
