@@ -347,19 +347,18 @@ else:
         child = c.fetchone()
         if child:
             # Display Child Details in Blue
-if child:
-    st.markdown(f"""
-    <div style="color: #0000FF; font-weight: bold;">
-        <p><strong>Application Number:</strong> {child[0]}</p>
-        <p><strong>Name:</strong> {child[1]}</p>
-        <p><strong>Birth Place:</strong> {child[2]}</p>
-        <p><strong>DOB:</strong> {child[3]}</p>
-        <p><strong>Weight:</strong> {child[4]} kg, 
-           <strong>Height:</strong> {child[5]} cm, 
-           <strong>Pulse:</strong> {child[6]}, 
-           <strong>Last Tracked:</strong> {child[7]}</p>
-    </div>
-    """, unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="color: #0000FF; font-weight: bold;">
+                <p><strong>Application Number:</strong> {child[0]}</p>
+                <p><strong>Name:</strong> {child[1]}</p>
+                <p><strong>Birth Place:</strong> {child[2]}</p>
+                <p><strong>DOB:</strong> {child[3]}</p>
+                <p><strong>Weight:</strong> {child[4]} kg, 
+                   <strong>Height:</strong> {child[5]} cm, 
+                   <strong>Pulse:</strong> {child[6]}, 
+                   <strong>Last Tracked:</strong> {child[7]}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
 
             # Medical History
@@ -382,4 +381,5 @@ if child:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
