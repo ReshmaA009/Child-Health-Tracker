@@ -1,8 +1,41 @@
+import streamlit as st
+from datetime import date
+import uuid
+import sqlite3
+import hashlib
+
+# --- Session State Initialization ---
+if "app_number" not in st.session_state:
+    st.session_state.app_number = str(uuid.uuid4())[:8]
+if "doctor_logged_in" not in st.session_state:
+    st.session_state.doctor_logged_in = False
+if "doctor_username" not in st.session_state:
+    st.session_state.doctor_username = ""
+
+# --- Database helper function ---
+def get_connection():
+    return sqlite3.connect("child_health.db")
+
+def create_tables():
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("""...""")  # child_details table
+        c.execute("""...""")  # medical_history table
+        c.execute("""...""")  # vaccinations table
+        # add doctor table if needed
+        conn.commit()
+
+create_tables()
+
+# --- Your Tab 1, Tab 2, Tab 3 code goes here ---
+
 # --- Doctor Panel with Edit & Mark Wrong ---
 if st.session_state.doctor_logged_in:
     st.header("Doctor Panel")
     with get_connection() as conn:
         c = conn.cursor()
+        # rest of doctor panel code
+
         c.execute("SELECT app_number, name, birth_date FROM child_details")
         children = c.fetchall()
         st.subheader("All Children")
@@ -262,4 +295,5 @@ with tab3:
 if st.button("Reset App"):
     st.session_state.clear()
     st.experimental_rerun()
+
 
