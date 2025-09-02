@@ -21,36 +21,37 @@ st.markdown("""
 
     /* Headings */
     h1, h2, h3, h4, h5, h6 {
-        color: #8B0000 !important;  /* Dark red / brown */
+        color: #8B4513 !important;  /* Dark brown */
     }
 
     /* Labels, text inside inputs, text areas, and tables */
     label, .stTextInput > div > input, .stTextArea > div > textarea, .stSelectbox > div, 
     .stNumberInput > div > input, td, th {
-        color: #8B0000 !important;
+        color: #8B4513 !important;
         font-weight: bold;
     }
 
-    /* Vaccination checkboxes labels */
-    .stCheckbox > div > label {
-        color: #8B0000 !important;
+    /* Vaccination checkbox labels */
+    .stCheckbox > div > label, .stCheckbox > div > label span {
+        color: #8B4513 !important;
         font-weight: bold;
     }
 
     /* Tables */
     table {
         background-color: #ffe6f0 !important;
-        color: #8B0000 !important;
+        color: #8B4513 !important;
         border-radius: 10px;
     }
 
     /* Buttons text */
     button, .stButton > button {
-        color: #8B0000 !important;
+        color: #8B4513 !important;
         font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 # ---------------------- Database Setup ----------------------
 def get_connection():
@@ -367,6 +368,7 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
 
 
