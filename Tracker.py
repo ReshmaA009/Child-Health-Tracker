@@ -320,10 +320,13 @@ else:
                               (st.session_state.app_number, v))
                     completed = c.fetchone() is not None
 
-                    # Wrap label in HTML to make it dark blue
-                    checkbox_label = f"<span style='color: darkblue; font-weight: bold;'>{v}</span>"
-                    done = st.checkbox(checkbox_label, value=completed, key=f"{v}_done", unsafe_allow_html=True)
+                    # Display the vaccine name in dark blue using markdown
+                    st.markdown(f"<span style='color: darkblue; font-weight:bold;'>{v}</span>", unsafe_allow_html=True)
+        
+                    # Display checkbox without a label
+                    done = st.checkbox("", value=completed, key=f"{v}_done")
 
+                    # Add/remove vaccination in DB based on checkbox
                     if done and not completed:
                         barcode = str(uuid.uuid4())[:8]
                         c.execute("INSERT INTO vaccinations (app_number, vaccine_name, date, barcode) VALUES (?,?,?,?)",
@@ -334,14 +337,6 @@ else:
                                   (st.session_state.app_number, v))
                         conn.commit()
 
-
-            # Display completed vaccines
-            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?",
-                      (st.session_state.app_number,))
-            vac_rows = c.fetchall()
-            if vac_rows:
-                st.subheader("Completed Vaccinations")
-                st.table(vac_rows)
 
     # ---------------------- Patient Panel ----------------------
     elif st.session_state.role == "Patient":
@@ -385,6 +380,7 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
 
 
 
