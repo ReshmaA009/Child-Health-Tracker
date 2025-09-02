@@ -284,34 +284,35 @@ else:
                 st.table(vac_rows)
 
     # ---------------------- Patient Panel ----------------------
-elif st.session_state.role == "Patient":
-    st.subheader("Patient Panel (Read-only)")
-    c.execute("SELECT * FROM child_details")
-    children = c.fetchall()
-    for child in children:
-        st.markdown(f"**Application Number:** {child[0]}")
-        st.write(f"Name: {child[1]}")
-        st.write(f"Birth Place: {child[2]}")
-        st.write(f"DOB: {child[3]}")
-        st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
+    elif st.session_state.role == "Patient":
+        st.subheader("Patient Panel (Read-only)")
+        c.execute("SELECT * FROM child_details")
+        children = c.fetchall()
+        for child in children:
+            st.markdown(f"**Application Number:** {child[0]}")
+            st.write(f"Name: {child[1]}")
+            st.write(f"Birth Place: {child[2]}")
+            st.write(f"DOB: {child[3]}")
+            st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
 
-        # Medical History
-        c.execute("""
-            SELECT visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic
-            FROM medical_history WHERE app_number=?
-        """, (child[0],))
-        history_rows = c.fetchall()
-        if history_rows:
-            st.subheader("Medical History / Prescription / Allergic Info")
-            st.table(history_rows)
-        else:
-            st.info("No medical history recorded yet.")
+            # Medical History
+            c.execute("""
+                SELECT visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic
+                FROM medical_history WHERE app_number=?
+            """, (child[0],))
+            history_rows = c.fetchall()
+            if history_rows:
+                st.subheader("Medical History / Prescription / Allergic Info")
+                st.table(history_rows)
+            else:
+                st.info("No medical history recorded yet.")
 
-        # Vaccinations
-        c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (child[0],))
-        vac_rows = c.fetchall()
-        if vac_rows:
-            st.subheader("Vaccinations (with Barcode)")
-            st.table(vac_rows)
-        else:
-            st.info("No vaccinations recorded yet.")
+            # Vaccinations
+            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (child[0],))
+            vac_rows = c.fetchall()
+            if vac_rows:
+                st.subheader("Vaccinations (with Barcode)")
+                st.table(vac_rows)
+            else:
+                st.info("No vaccinations recorded yet.")
+
