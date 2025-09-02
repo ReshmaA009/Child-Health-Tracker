@@ -102,7 +102,7 @@ with tab1:
             st.session_state.username = username
             st.session_state.role = role
             st.success(f"Logged in as {role}: {username}")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid credentials or role mismatch")
 
@@ -264,3 +264,4 @@ if st.session_state.logged_in:
                 if vac_rows:
                     st.subheader("Completed Vaccinations")
                     st.table(vac_rows)
+
