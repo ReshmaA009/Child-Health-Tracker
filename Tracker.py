@@ -1,3 +1,85 @@
+# --- Doctor Panel with Edit & Mark Wrong ---
+if st.session_state.doctor_logged_in:
+    st.header("Doctor Panel")
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("SELECT app_number, name, birth_date FROM child_details")
+        children = c.fetchall()
+        st.subheader("All Children")
+
+        for child in children:
+            app_num, name, dob = child
+            st.write(f"**Application Number:** {app_num} | **Name:** {name} | **DOB:** {dob}")
+
+            # Load medical history that is NOT marked wrong
+            c.execute("""
+                SELECT id, visit_date, hospital, doctor, specialization, reason, medications, wrong_record
+                FROM medical_history WHERE app_number=? ORDER BY visit_date
+            """, (app_num,))
+            histories = c.fetchall()
+
+            for h in histories:
+                if h[7]:  # wrong_record column
+                    st.write(f"⚠️ This record is marked wrong and cannot be edited. (ID: {h[0]})")
+                    continue
+
+                st.write({
+                    "Visit Date": h[1],
+                    "Hospital": h[2],
+                    "Doctor": h[3],
+                    "Specialization": h[4],
+                    "Reason": h[5],
+                    "Medications": h[6]
+                })
+
+                # Edit form
+                with st.form(f"edit_history_{h[0]}"):
+                    new_visit = st.date_input("Visit Date", value=date.fromisoformat(h[1]), key=f"visit_{h[0]}")
+                    new_hospital = st.text_input("Hospital Name", value=h[2], key=f"hospital_{h[0]}")
+                    new_specialization = st.text_input("Doctor Specialization", value=h[4], key=f"spec_{h[0]}")
+                    new_reason = st.text_area("Reason for Visit", value=h[5], key=f"reason_{h[0]}")
+                    new_meds = st.text_area("Medications Prescribed", value=h[6], key=f"meds_{h[0]}")
+                    mark_wrong = st.checkbox("Mark this record as WRONG", key=f"wrong_{h[0]}")
+                    submitted_edit = st.form_submit_button("Save Changes")
+
+                    if submitted_edit:
+                        with get_connection() as conn2:
+                            c2 = conn2.cursor()
+                            if mark_wrong:
+                                # Mark as wrong
+                                c2.execute("UPDATE medical_history SET wrong_record=1 WHERE id=?", (h[0],))
+                                conn2.commit()
+                                st.warning("Record marked as WRONG. You can now create a new record.")
+                            else:
+                                # Update the record
+                                c2.execute("""
+                                    UPDATE medical_history
+                                    SET visit_date=?, hospital=?, doctor=?, specialization=?, reason=?, medications=?
+                                    WHERE id=?
+                                """, (str(new_visit), new_hospital, st.session_state.doctor_username,
+                                      new_specialization, new_reason, new_meds, h[0]))
+                                conn2.commit()
+                                st.success("Record updated successfully!")
+
+            # Add new record
+            with st.form(f"add_history_{app_num}"):
+                st.subheader("Add New Medical History")
+                visit_date = st.date_input("Visit Date", value=date.today(), key=f"new_visit_{app_num}")
+                hospital = st.text_input("Hospital Name", key=f"new_hospital_{app_num}")
+                specialization = st.text_input("Doctor Specialization", key=f"new_spec_{app_num}")
+                reason = st.text_area("Reason for Visit", key=f"new_reason_{app_num}")
+                meds = st.text_area("Medications Prescribed", key=f"new_meds_{app_num}")
+                submitted_new = st.form_submit_button("Add History")
+                if submitted_new:
+                    with get_connection() as conn2:
+                        c2 = conn2.cursor()
+                        c2.execute("""
+                            INSERT INTO medical_history (app_number, visit_date, hospital, doctor, specialization, reason, medications, wrong_record)
+                            VALUES (?,?,?,?,?,?,?,0)
+                        """, (app_num, str(visit_date), hospital, st.session_state.doctor_username,
+                              specialization, reason, meds))
+                        conn2.commit()
+                        st.success("New record added successfully!")
 import streamlit as st
 from datetime import date
 import uuid
@@ -180,3 +262,4 @@ with tab3:
 if st.button("Reset App"):
     st.session_state.clear()
     st.experimental_rerun()
+
