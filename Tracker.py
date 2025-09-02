@@ -7,23 +7,40 @@ import hashlib
 # ---------------------- Background & Panel Styling ----------------------
 st.markdown("""
     <style>
-    /* Page background gradient */
+    /* Page background gradient (rainbow) */
     .stApp {
         background: linear-gradient(135deg, #ffcccc, #ffe6cc, #ffffcc, #e6ffcc, #ccffff, #e6ccff);
     }
 
-    /* Main panel boxes (sections, forms, tables) */
+    /* Panels / boxes */
     .css-1d391kg, .css-1v3fvcr, .stFrame {
-        background-color: rgba(255, 255, 255, 0.85);
+        background-color: #ffe6f0 !important;  /* Soft pink */
         padding: 1rem;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        color: red;  /* Text inside panels */
     }
 
-    /* Tables */
+    /* Tables inside panels */
     table {
-        background-color: rgba(255,255,255,0.9) !important;
+        background-color: #ffe6f0 !important;
+        color: red;
         border-radius: 10px;
+    }
+
+    /* Labels and inputs */
+    label, .stTextInput > div > input {
+        color: red;
+    }
+
+    /* Headings */
+    h1, h2, h3, h4, h5, h6 {
+        color: red;
+    }
+
+    /* Buttons text */
+    button {
+        color: red;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -343,3 +360,4 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
