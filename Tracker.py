@@ -88,7 +88,7 @@ def logout():
     st.session_state.username = ""
     st.session_state.role = ""
     st.session_state.app_number = ""
-    st.experimental_rerun()
+    st.rerun()
 
 # ---------------------- App ----------------------
 st.title("Child Health Tracker")
@@ -109,7 +109,7 @@ if not st.session_state.logged_in:
                 st.session_state.username = username
                 st.session_state.role = db_role
                 st.success(f"Logged in as {db_role}: {username}")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Invalid credentials or role mismatch")
 
@@ -298,4 +298,5 @@ else:
                     st.table(vac_rows)
                 else:
                     st.info("No vaccinations recorded yet.")
+
 
