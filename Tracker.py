@@ -36,7 +36,51 @@ if st.session_state.doctor_logged_in:
         c = conn.cursor()
         # rest of doctor panel code
 
-        c.execute("SELECT app_number, name, birth_date FROM child_details")
+        def create_tables():
+    with get_connection() as conn:
+        c = conn.cursor()
+        # Child Details table
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS child_details (
+            app_number TEXT PRIMARY KEY,
+            name TEXT,
+            birth_place TEXT,
+            birth_date TEXT,
+            weight REAL,
+            height REAL,
+            pulse INTEGER,
+            last_tracked TEXT
+        )
+        """)
+        # Medical History table
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS medical_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            app_number TEXT,
+            visit_date TEXT,
+            hospital TEXT,
+            doctor TEXT,
+            specialization TEXT,
+            reason TEXT,
+            medications TEXT,
+            wrong_record INTEGER DEFAULT 0,
+            FOREIGN KEY(app_number) REFERENCES child_details(app_number)
+        )
+        """)
+        # Vaccinations table
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS vaccinations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            app_number TEXT,
+            vaccine_name TEXT,
+            date TEXT,
+            barcode TEXT,
+            UNIQUE(app_number, vaccine_name),
+            FOREIGN KEY(app_number) REFERENCES child_details(app_number)
+        )
+        """)
+        conn.commit()
+
         children = c.fetchall()
         st.subheader("All Children")
 
@@ -295,5 +339,6 @@ with tab3:
 if st.button("Reset App"):
     st.session_state.clear()
     st.experimental_rerun()
+
 
 
