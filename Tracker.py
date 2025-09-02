@@ -56,6 +56,7 @@ def create_tables():
             vaccine_name TEXT,
             date TEXT,
             barcode TEXT,
+            UNIQUE(app_number, vaccine_name),
             FOREIGN KEY(app_number) REFERENCES child_details(app_number)
         )
     """)
@@ -63,28 +64,10 @@ def create_tables():
 
 create_tables()
 
-# ---------------------- Add missing columns for older DB ----------------------
-conn = get_connection()
-c = conn.cursor()
-try:
-    c.execute("ALTER TABLE medical_history ADD COLUMN diagnosis TEXT")
-except sqlite3.OperationalError:
-    pass
-try:
-    c.execute("ALTER TABLE medical_history ADD COLUMN allergic TEXT")
-except sqlite3.OperationalError:
-    pass
-conn.commit()
-
 # ---------------------- Session State ----------------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "username" not in st.session_state:
-    st.session_state.username = ""
-if "role" not in st.session_state:
-    st.session_state.role = ""
-if "app_number" not in st.session_state:
-    st.session_state.app_number = ""
+for key in ["logged_in", "username", "role", "app_number"]:
+    if key not in st.session_state:
+        st.session_state[key] = "" if key != "logged_in" else False
 
 # ---------------------- Password Helper ----------------------
 def hash_password(password):
@@ -105,7 +88,7 @@ def logout():
     st.session_state.username = ""
     st.session_state.role = ""
     st.session_state.app_number = ""
-    st.rerun()
+    st.experimental_rerun()
 
 # ---------------------- App ----------------------
 st.title("Child Health Tracker")
@@ -126,7 +109,7 @@ if not st.session_state.logged_in:
                 st.session_state.username = username
                 st.session_state.role = db_role
                 st.success(f"Logged in as {db_role}: {username}")
-                st.rerun()
+                st.experimental_rerun()
             else:
                 st.error("Invalid credentials or role mismatch")
 
@@ -162,7 +145,6 @@ else:
         app_number_input = st.text_input("Enter Application Number", value=st.session_state.app_number)
         new_app_btn = st.button("New Application Number")
 
-        # Generate new application number
         if new_app_btn:
             app_number_input = str(uuid.uuid4())[:8]
             st.session_state.app_number = app_number_input
@@ -170,6 +152,7 @@ else:
 
         if app_number_input:
             st.session_state.app_number = app_number_input
+
             # Fetch child details
             c.execute("SELECT * FROM child_details WHERE app_number=?", (app_number_input,))
             child = c.fetchone()
@@ -284,35 +267,4 @@ else:
                 st.table(vac_rows)
 
     # ---------------------- Patient Panel ----------------------
-    elif st.session_state.role == "Patient":
-        st.subheader("Patient Panel (Read-only)")
-        c.execute("SELECT * FROM child_details")
-        children = c.fetchall()
-        for child in children:
-            st.markdown(f"**Application Number:** {child[0]}")
-            st.write(f"Name: {child[1]}")
-            st.write(f"Birth Place: {child[2]}")
-            st.write(f"DOB: {child[3]}")
-            st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
-
-            # Medical History
-            c.execute("""
-                SELECT visit_date, hospital, doctor, specialization, diagnosis, reason, medications, allergic
-                FROM medical_history WHERE app_number=?
-            """, (child[0],))
-            history_rows = c.fetchall()
-            if history_rows:
-                st.subheader("Medical History / Prescription / Allergic Info")
-                st.table(history_rows)
-            else:
-                st.info("No medical history recorded yet.")
-
-            # Vaccinations
-            c.execute("SELECT vaccine_name, date, barcode FROM vaccinations WHERE app_number=?", (child[0],))
-            vac_rows = c.fetchall()
-            if vac_rows:
-                st.subheader("Vaccinations (with Barcode)")
-                st.table(vac_rows)
-            else:
-                st.info("No vaccinations recorded yet.")
-
+    elif st.session_state.role =_
