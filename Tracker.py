@@ -346,11 +346,21 @@ else:
         c.execute("SELECT * FROM child_details WHERE app_number=?", (app_number_input,))
         child = c.fetchone()
         if child:
-            st.markdown(f"**Application Number:** {child[0]}")
-            st.write(f"Name: {child[1]}")
-            st.write(f"Birth Place: {child[2]}")
-            st.write(f"DOB: {child[3]}")
-            st.write(f"Weight: {child[4]} kg, Height: {child[5]} cm, Pulse: {child[6]}, Last Tracked: {child[7]}")
+            # Display Child Details in Blue
+if child:
+    st.markdown(f"""
+    <div style="color: #0000FF; font-weight: bold;">
+        <p><strong>Application Number:</strong> {child[0]}</p>
+        <p><strong>Name:</strong> {child[1]}</p>
+        <p><strong>Birth Place:</strong> {child[2]}</p>
+        <p><strong>DOB:</strong> {child[3]}</p>
+        <p><strong>Weight:</strong> {child[4]} kg, 
+           <strong>Height:</strong> {child[5]} cm, 
+           <strong>Pulse:</strong> {child[6]}, 
+           <strong>Last Tracked:</strong> {child[7]}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
 
             # Medical History
             c.execute("""
@@ -372,3 +382,4 @@ else:
                 st.table(vac_rows)
             else:
                 st.info("No vaccinations recorded yet.")
+
